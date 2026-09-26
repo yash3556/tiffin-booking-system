@@ -1,8 +1,31 @@
 import { Hono } from "hono";
 import { validateService } from "../validators/service.validator.js";
-import { createService } from "../services/service.service.js";
+import {
+  createService,
+  getServices,
+} from "../services/service.service.js";
 
 const serviceRoutes = new Hono();
+
+
+serviceRoutes.get("/", async (c) => {
+  try {
+    const services = await getServices();
+
+    return c.json({
+      success: true,
+      data: services,
+    });
+  } catch {
+    return c.json(
+      {
+        success: false,
+        message: "Could not fetch services",
+      },
+      500
+    );
+  }
+});
 
 serviceRoutes.post("/", async (c) => {
   const body = await c.req.json();

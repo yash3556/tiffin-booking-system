@@ -1,10 +1,21 @@
 import { prisma } from "../lib/prisma.js";
 
-export async function createService(name: string, price: number) {
+export const createService = async (
+  name: string,
+  price: number
+) => {
   return prisma.service.create({
     data: {
       name,
       price,
     },
   });
-}
+};
+
+export const getServices = async () => {
+  return prisma.service.findMany({
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+};
