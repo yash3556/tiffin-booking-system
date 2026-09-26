@@ -7,6 +7,53 @@ datasource db {
   provider = "postgresql"
 }
 
+model Customer {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String    @unique
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Service {
+  id        String    @id @default(cuid())
+  name      String
+  price     Int
+  createdAt DateTime  @default(now())
+  bookings  Booking[]
+}
+
+model Booking {
+  id           String          @id @default(cuid())
+  customerId   String
+  serviceId    String
+  status       BookingStatus   @default(PENDING)
+  createdAt    DateTime        @default(now())
+  customer     Customer        @relation(fields: [customerId], references: [id])
+  service      Service         @relation(fields: [serviceId], references: [id])
+  transactions Transaction[]
+  history      BookingHistory[]
+}
+
+model BookingHistory {
+  id         String        @id @default(cuid())
+  bookingId  String
+  fromStatus BookingStatus?
+  toStatus   BookingStatus
+  createdAt  DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  bookingId String
+  amount    Int
+  status    TransactionStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+  booking   Booking           @relation(fields: [bookingId], references: [id])
+}
+
 enum BookingStatus {
   PENDING
   CONFIRMED
@@ -18,44 +65,4 @@ enum TransactionStatus {
   PENDING
   SUCCESS
   FAILED
-}
-
-model Customer {
-  id        String    @id @default(cuid())
-  name      String
-  phone     String    @unique
-  createdAt DateTime  @default(now())
-
-  bookings Booking[]
-}
-
-model Service {
-  id        String    @id @default(cuid())
-  name      String
-  price     Int
-  createdAt DateTime  @default(now())
-
-  bookings Booking[]
-}
-
-model Booking {
-  id          String        @id @default(cuid())
-  customerId  String
-  serviceId   String
-  status      BookingStatus @default(PENDING)
-  createdAt   DateTime      @default(now())
-
-  customer    Customer      @relation(fields: [customerId], references: [id])
-  service     Service       @relation(fields: [serviceId], references: [id])
-  transactions Transaction[]
-}
-
-model Transaction {
-  id        String            @id @default(cuid())
-  bookingId String
-  amount    Int
-  status    TransactionStatus @default(PENDING)
-  createdAt DateTime          @default(now())
-
-  booking Booking @relation(fields: [bookingId], references: [id])
 }

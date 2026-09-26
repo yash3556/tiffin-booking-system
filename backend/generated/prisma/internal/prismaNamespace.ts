@@ -400,6 +400,7 @@ export const ModelName = {
   Customer: 'Customer',
   Service: 'Service',
   Booking: 'Booking',
+  BookingHistory: 'BookingHistory',
   Transaction: 'Transaction'
 } as const
 
@@ -416,7 +417,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "customer" | "service" | "booking" | "transaction"
+    modelProps: "customer" | "service" | "booking" | "bookingHistory" | "transaction"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -642,6 +643,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    BookingHistory: {
+      payload: Prisma.$BookingHistoryPayload<ExtArgs>
+      fields: Prisma.BookingHistoryFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.BookingHistoryFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.BookingHistoryFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        findFirst: {
+          args: Prisma.BookingHistoryFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.BookingHistoryFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        findMany: {
+          args: Prisma.BookingHistoryFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>[]
+        }
+        create: {
+          args: Prisma.BookingHistoryCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        createMany: {
+          args: Prisma.BookingHistoryCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.BookingHistoryCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>[]
+        }
+        delete: {
+          args: Prisma.BookingHistoryDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        update: {
+          args: Prisma.BookingHistoryUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        deleteMany: {
+          args: Prisma.BookingHistoryDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.BookingHistoryUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.BookingHistoryUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>[]
+        }
+        upsert: {
+          args: Prisma.BookingHistoryUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BookingHistoryPayload>
+        }
+        aggregate: {
+          args: Prisma.BookingHistoryAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBookingHistory>
+        }
+        groupBy: {
+          args: Prisma.BookingHistoryGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookingHistoryGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.BookingHistoryCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.BookingHistoryCountAggregateOutputType> | number
+        }
+      }
+    }
     Transaction: {
       payload: Prisma.$TransactionPayload<ExtArgs>
       fields: Prisma.TransactionFieldRefs
@@ -786,6 +861,17 @@ export const BookingScalarFieldEnum = {
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
 
 
+export const BookingHistoryScalarFieldEnum = {
+  id: 'id',
+  bookingId: 'bookingId',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  createdAt: 'createdAt'
+} as const
+
+export type BookingHistoryScalarFieldEnum = (typeof BookingHistoryScalarFieldEnum)[keyof typeof BookingHistoryScalarFieldEnum]
+
+
 export const TransactionScalarFieldEnum = {
   id: 'id',
   bookingId: 'bookingId',
@@ -811,6 +897,14 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 
@@ -1056,6 +1150,7 @@ export type GlobalOmitConfig = {
   customer?: Prisma.CustomerOmit
   service?: Prisma.ServiceOmit
   booking?: Prisma.BookingOmit
+  bookingHistory?: Prisma.BookingHistoryOmit
   transaction?: Prisma.TransactionOmit
 }
 

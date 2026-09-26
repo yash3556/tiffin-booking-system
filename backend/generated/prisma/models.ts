@@ -11,5 +11,6 @@
 export type * from './models/Customer.js'
 export type * from './models/Service.js'
 export type * from './models/Booking.js'
+export type * from './models/BookingHistory.js'
 export type * from './models/Transaction.js'
 export type * from './commonInputTypes.js'

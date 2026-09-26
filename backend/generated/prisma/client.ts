@@ -57,6 +57,11 @@ export type Service = Prisma.ServiceModel
  */
 export type Booking = Prisma.BookingModel
 /**
+ * Model BookingHistory
+ * 
+ */
+export type BookingHistory = Prisma.BookingHistoryModel
+/**
  * Model Transaction
  * 
  */

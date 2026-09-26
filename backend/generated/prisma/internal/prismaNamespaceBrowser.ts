@@ -54,6 +54,7 @@ export const ModelName = {
   Customer: 'Customer',
   Service: 'Service',
   Booking: 'Booking',
+  BookingHistory: 'BookingHistory',
   Transaction: 'Transaction'
 } as const
 
@@ -104,6 +105,17 @@ export const BookingScalarFieldEnum = {
 export type BookingScalarFieldEnum = (typeof BookingScalarFieldEnum)[keyof typeof BookingScalarFieldEnum]
 
 
+export const BookingHistoryScalarFieldEnum = {
+  id: 'id',
+  bookingId: 'bookingId',
+  fromStatus: 'fromStatus',
+  toStatus: 'toStatus',
+  createdAt: 'createdAt'
+} as const
+
+export type BookingHistoryScalarFieldEnum = (typeof BookingHistoryScalarFieldEnum)[keyof typeof BookingHistoryScalarFieldEnum]
+
+
 export const TransactionScalarFieldEnum = {
   id: 'id',
   bookingId: 'bookingId',
@@ -129,4 +141,12 @@ export const QueryMode = {
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
