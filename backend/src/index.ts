@@ -1,12 +1,18 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import customerRoutes from "./routes/customer.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
 
 const app = new Hono();
-
+app.use(
+  "*",
+  cors({
+    origin: "http://localhost:8081",
+  })
+);
 
 app.get('/',(c)=>{
   return c.json({
