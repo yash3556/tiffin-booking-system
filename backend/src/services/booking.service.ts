@@ -18,6 +18,17 @@ const validTransitions: Record<BookingStatusValue, BookingStatusValue[]> = {
   COMPLETED: [],
 };
 
+export async function getBookingsForCustomer(customerId: string) {
+  return prisma.booking.findMany({
+    where: { customerId },
+    include: {
+      service: true,
+      transactions: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 export async function createBooking(customerId: string, serviceId: string) {
   return prisma.$transaction(async (transaction) => {
     const customer = await transaction.customer.findUnique({
@@ -56,9 +67,9 @@ export async function createBooking(customerId: string, serviceId: string) {
   });
 }
 
-export async function getBooking(id: string) {
+export async function getBooking(id: string, customerId: string) {
   return prisma.booking.findUnique({
-    where: { id },
+    where: { id, customerId },
     include: {
       customer: true,
       service: true,
@@ -69,11 +80,12 @@ export async function getBooking(id: string) {
 
 export async function updateBookingStatus(
   id: string,
+  customerId: string,
   toStatus: BookingStatusValue
 ) {
   return prisma.$transaction(async (transaction) => {
     const booking = await transaction.booking.findUnique({
-      where: { id },
+      where: { id, customerId },
     });
 
     if (!booking) {
@@ -106,9 +118,9 @@ export async function updateBookingStatus(
   });
 }
 
-export async function getBookingHistory(id: string) {
+export async function getBookingHistory(id: string, customerId: string) {
   const booking = await prisma.booking.findUnique({
-    where: { id },
+    where: { id, customerId },
     select: { id: true },
   });
 

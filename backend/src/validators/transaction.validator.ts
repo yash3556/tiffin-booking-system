@@ -1,22 +1,42 @@
-export function validateTransaction(body: any) {
-  if (!body) {
-    return "Request body is required";
+export type TransactionInput = {
+  bookingId: string;
+  amount: number;
+};
+
+export function validateTransaction(body: unknown): body is TransactionInput {
+  if (!body || typeof body !== "object") {
+    return false;
+  }
+
+  const transaction = body as Record<string, unknown>;
+  if (
+    typeof transaction.bookingId !== "string" ||
+    transaction.bookingId.trim() === ""
+  ) {
+    return false;
   }
 
   if (
-    typeof body.bookingId !== "string" ||
-    body.bookingId.trim() === ""
+    typeof transaction.amount !== "number" ||
+    !Number.isInteger(transaction.amount) ||
+    transaction.amount <= 0
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+export function transactionValidationMessage(body: unknown) {
+  if (!body || typeof body !== "object") {
+    return "Request body is required";
+  }
+  const transaction = body as Record<string, unknown>;
+  if (
+    typeof transaction.bookingId !== "string" ||
+    transaction.bookingId.trim() === ""
   ) {
     return "Valid bookingId is required";
   }
-
-  if (
-    typeof body.amount !== "number" ||
-    !Number.isInteger(body.amount) ||
-    body.amount <= 0
-  ) {
-    return "Amount must be a positive integer";
-  }
-
-  return null;
+  return "Amount must be a positive integer";
 }

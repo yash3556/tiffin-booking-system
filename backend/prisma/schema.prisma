@@ -12,7 +12,9 @@ model Customer {
   name      String
   phone     String    @unique
   createdAt DateTime  @default(now())
+  userId    String?   @unique
   bookings  Booking[]
+  user      user?     @relation(fields: [userId], references: [id])
 }
 
 model Service {
@@ -24,25 +26,24 @@ model Service {
 }
 
 model Booking {
-  id           String          @id @default(cuid())
+  id           String           @id @default(cuid())
   customerId   String
   serviceId    String
-  status       BookingStatus   @default(PENDING)
-  createdAt    DateTime        @default(now())
-  customer     Customer        @relation(fields: [customerId], references: [id])
-  service      Service         @relation(fields: [serviceId], references: [id])
-  transactions Transaction[]
+  status       BookingStatus    @default(PENDING)
+  createdAt    DateTime         @default(now())
+  customer     Customer         @relation(fields: [customerId], references: [id])
+  service      Service          @relation(fields: [serviceId], references: [id])
   history      BookingHistory[]
+  transactions Transaction[]
 }
 
 model BookingHistory {
-  id         String        @id @default(cuid())
+  id         String         @id @default(cuid())
   bookingId  String
   fromStatus BookingStatus?
   toStatus   BookingStatus
-  createdAt  DateTime      @default(now())
-
-  booking Booking @relation(fields: [bookingId], references: [id])
+  createdAt  DateTime       @default(now())
+  booking    Booking        @relation(fields: [bookingId], references: [id])
 }
 
 model Transaction {
@@ -52,6 +53,63 @@ model Transaction {
   status    TransactionStatus @default(PENDING)
   createdAt DateTime          @default(now())
   booking   Booking           @relation(fields: [bookingId], references: [id])
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
+  user                  user      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model user {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  Customer      Customer?
+  account       account[]
+  session       session[]
+}
+
+model verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+
+  @@index([identifier])
 }
 
 enum BookingStatus {

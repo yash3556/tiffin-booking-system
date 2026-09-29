@@ -17,28 +17,20 @@ export function isBookingStatus(
   );
 }
 
-export function validateBooking(body: unknown) {
+export type BookingInput = {
+  serviceId: string;
+};
+
+export function validateBooking(body: unknown): body is BookingInput {
   if (!body || typeof body !== "object") {
-    return "Request body is required";
+    return false;
   }
 
   const booking = body as Record<string, unknown>;
-
-  if (
-    typeof booking.customerId !== "string" ||
-    booking.customerId.trim() === ""
-  ) {
-    return "Valid customerId is required";
-  }
-
-  if (
-    typeof booking.serviceId !== "string" ||
-    booking.serviceId.trim() === ""
-  ) {
-    return "Valid serviceId is required";
-  }
-
-  return null;
+  return (
+    typeof booking.serviceId === "string" &&
+    booking.serviceId.trim() !== ""
+  );
 }
 
 export function validateBookingStatus(body: unknown) {
