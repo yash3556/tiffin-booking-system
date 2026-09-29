@@ -14,7 +14,6 @@ const authStore: MemoryDB = {
   verification: [],
 };
 
-const bookingOwners = new Map<string, string>();
 const usersWithoutCustomer = new Set<string>();
 let customerLookupCount = 0;
 
@@ -48,30 +47,6 @@ app.route(
         };
       },
       getBookingsForCustomer: async () => [],
-      getBooking: async (bookingId, customerId) =>
-        bookingOwners.get(bookingId) === customerId
-          ? {
-              id: bookingId,
-              customerId,
-              serviceId: "service-1",
-              status: "PENDING",
-              createdAt: new Date(),
-              customer: {
-                id: customerId,
-                name: "Test Customer",
-                phone: "5550100",
-                userId: customerId.replace("customer-for-", ""),
-                createdAt: new Date(),
-              },
-              service: {
-                id: "service-1",
-                name: "Test Service",
-                price: 100,
-                createdAt: new Date(),
-              },
-              transactions: [],
-            }
-          : null,
     },
     createAuthMiddleware(async (headers) => {
       const session = await testAuth.api.getSession({ headers });
@@ -243,56 +218,4 @@ test("rejects a real expired session", async () => {
 
   const response = await app.request("/bookings", { headers: { cookie } });
   assert.equal(response.status, 401);
-});
-
-test("blocks user B from user A's private booking", async () => {
-  const users = [
-    { email: `owner-${crypto.randomUUID()}@example.com`, name: "Owner" },
-    { email: `other-${crypto.randomUUID()}@example.com`, name: "Other" },
-  ];
-  const password = "a-strong-test-password";
-  const sessions: string[] = [];
-  const userIds: string[] = [];
-
-  for (const user of users) {
-    assert.equal(
-      (
-        await authRequest("sign-up/email", {
-          ...user,
-          password,
-        })
-      ).status,
-      200
-    );
-    const login = await authRequest("sign-in/email", {
-      email: user.email,
-      password,
-    });
-    assert.equal(login.status, 200);
-    const cookie = login.headers.get("set-cookie")?.split(";")[0];
-    assert.ok(cookie);
-    sessions.push(cookie);
-
-    const sessionResponse = await authRequest(
-      "get-session",
-      undefined,
-      cookie
-    );
-    const session = await sessionResponse.json();
-    userIds.push(session.user.id);
-  }
-
-  const bookingId = "owner-private-booking";
-  const ownerCustomerId = `customer-for-${userIds[0]}`;
-  bookingOwners.set(bookingId, ownerCustomerId);
-
-  const ownerResponse = await app.request(`/bookings/${bookingId}`, {
-    headers: { cookie: sessions[0] },
-  });
-  assert.equal(ownerResponse.status, 200);
-
-  const otherResponse = await app.request(`/bookings/${bookingId}`, {
-    headers: { cookie: sessions[1] },
-  });
-  assert.equal(otherResponse.status, 404);
 });

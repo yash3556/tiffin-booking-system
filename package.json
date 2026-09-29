@@ -1,6 +1,8 @@
 {
   "dependencies": {
+    "@better-auth/prisma-adapter": "^1.7.6",
     "@prisma/client": "^7.10.0",
+    "better-auth": "^1.7.6",
     "expo": "^57.0.25"
   },
   "devDependencies": {

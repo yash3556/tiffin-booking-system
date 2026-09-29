@@ -4,7 +4,7 @@ import type { BookingStatusValue } from "../validators/booking.validator.js";
 export class BookingError extends Error {
   constructor(
     message: string,
-    public readonly statusCode: 400 | 404
+    public readonly statusCode: 400 | 403 | 404
   ) {
     super(message);
     this.name = "BookingError";
@@ -68,14 +68,23 @@ export async function createBooking(customerId: string, serviceId: string) {
 }
 
 export async function getBooking(id: string, customerId: string) {
-  return prisma.booking.findUnique({
-    where: { id, customerId },
+  const booking = await prisma.booking.findUnique({
+    where: { id },
     include: {
       customer: true,
       service: true,
       transactions: true,
     },
   });
+
+  if (!booking) {
+    return null;
+  }
+  if (booking.customerId !== customerId) {
+    throw new BookingError("Forbidden", 403);
+  }
+
+  return booking;
 }
 
 export async function updateBookingStatus(
@@ -85,11 +94,14 @@ export async function updateBookingStatus(
 ) {
   return prisma.$transaction(async (transaction) => {
     const booking = await transaction.booking.findUnique({
-      where: { id, customerId },
+      where: { id },
     });
 
     if (!booking) {
       throw new BookingError("Booking not found", 404);
+    }
+    if (booking.customerId !== customerId) {
+      throw new BookingError("Forbidden", 403);
     }
 
     const fromStatus = booking.status as BookingStatusValue;
@@ -120,12 +132,15 @@ export async function updateBookingStatus(
 
 export async function getBookingHistory(id: string, customerId: string) {
   const booking = await prisma.booking.findUnique({
-    where: { id, customerId },
-    select: { id: true },
+    where: { id },
+    select: { id: true, customerId: true },
   });
 
   if (!booking) {
     throw new BookingError("Booking not found", 404);
+  }
+  if (booking.customerId !== customerId) {
+    throw new BookingError("Forbidden", 403);
   }
 
   return prisma.bookingHistory.findMany({

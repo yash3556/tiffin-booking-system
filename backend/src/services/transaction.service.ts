@@ -3,7 +3,7 @@ import { prisma } from "../lib/prisma.js";
 export class TransactionError extends Error {
   constructor(
     message: string,
-    public readonly statusCode: 404
+    public readonly statusCode: 403 | 404
   ) {
     super(message);
     this.name = "TransactionError";
@@ -24,11 +24,14 @@ export async function getTransactionsForBooking(
   customerId: string
 ) {
   const booking = await prisma.booking.findUnique({
-    where: { id: bookingId, customerId },
-    select: { id: true },
+    where: { id: bookingId },
+    select: { id: true, customerId: true },
   });
   if (!booking) {
     throw new TransactionError("Booking not found", 404);
+  }
+  if (booking.customerId !== customerId) {
+    throw new TransactionError("Forbidden", 403);
   }
 
   return prisma.transaction.findMany({
@@ -38,12 +41,21 @@ export async function getTransactionsForBooking(
 }
 
 export async function getTransaction(id: string, customerId: string) {
-  return prisma.transaction.findFirst({
-    where: {
-      id,
-      booking: { customerId },
+  const transaction = await prisma.transaction.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      booking: { select: { customerId: true } },
     },
   });
+  if (!transaction) {
+    return null;
+  }
+  if (transaction.booking.customerId !== customerId) {
+    throw new TransactionError("Forbidden", 403);
+  }
+
+  return prisma.transaction.findUnique({ where: { id } });
 }
 
 export async function createTransaction(
@@ -52,11 +64,15 @@ export async function createTransaction(
   customerId: string
 ) {
   const booking = await prisma.booking.findUnique({
-    where: { id: bookingId, customerId },
+    where: { id: bookingId },
+    select: { id: true, customerId: true },
   });
 
   if (!booking) {
     throw new TransactionError("Booking not found", 404);
+  }
+  if (booking.customerId !== customerId) {
+    throw new TransactionError("Forbidden", 403);
   }
 
   return prisma.transaction.create({

@@ -1,10 +1,9 @@
-import { Hono } from "hono";
-import { authMiddleware, type AuthEnv } from "../middleware/auth.middleware.js";
-import { getCustomerForUser } from "../services/customer.service.js";
+import { Hono, type Context, type MiddlewareHandler } from "hono";
 import {
-  transactionValidationMessage,
-  validateTransaction,
-} from "../validators/transaction.validator.js";
+  authMiddleware,
+  type AuthEnv,
+} from "../middleware/auth.middleware.js";
+import { getCustomerForUser } from "../services/customer.service.js";
 import {
   createTransaction,
   getTransaction,
@@ -12,155 +11,168 @@ import {
   getTransactionsForCustomer,
   TransactionError,
 } from "../services/transaction.service.js";
+import {
+  transactionValidationMessage,
+  validateTransaction,
+} from "../validators/transaction.validator.js";
 
-const transactionRoutes = new Hono<AuthEnv>();
-transactionRoutes.use("*", authMiddleware);
+const transactionServices = {
+  getCustomerForUser,
+  createTransaction,
+  getTransaction,
+  getTransactionsForBooking,
+  getTransactionsForCustomer,
+};
 
-transactionRoutes.post("/", async (c) => {
-  const body = await c.req.json().catch(() => null);
+type TransactionRouteDependencies = Partial<typeof transactionServices>;
 
-  if (!validateTransaction(body)) {
+function handleTransactionError(
+  c: Context,
+  error: unknown,
+  fallback: string
+) {
+  if (error instanceof TransactionError) {
     return c.json(
-      {
-        success: false,
-        message: transactionValidationMessage(body),
-      },
-      400
+      { success: false, message: error.message },
+      error.statusCode
     );
   }
 
-  try {
-    const customer = await getCustomerForUser(
-      c.get("authSession").user.id
-    );
-    if (!customer) {
+  console.error(fallback, error);
+  return c.json({ success: false, message: fallback }, 500);
+}
+
+export function createTransactionRoutes(
+  overrides: TransactionRouteDependencies = {},
+  middleware: MiddlewareHandler<AuthEnv> = authMiddleware
+) {
+  const services = { ...transactionServices, ...overrides };
+  const routes = new Hono<AuthEnv>();
+  routes.use("*", middleware);
+
+  routes.post("/", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    if (!validateTransaction(body)) {
       return c.json(
-        { success: false, message: "Customer onboarding is required" },
-        409
+        {
+          success: false,
+          message: transactionValidationMessage(body),
+        },
+        400
       );
     }
 
-    const transaction = await createTransaction(
-      body.bookingId,
-      body.amount,
-      customer.id
-    );
+    try {
+      const customer = await services.getCustomerForUser(
+        c.get("authSession").user.id
+      );
+      if (!customer) {
+        return c.json(
+          { success: false, message: "Customer onboarding is required" },
+          409
+        );
+      }
 
-    return c.json(
-      {
-        success: true,
-        data: transaction,
-      },
-      201
-    );
-  } catch (error) {
-    if (error instanceof TransactionError) {
-      return c.json(
-        { success: false, message: error.message },
-        error.statusCode
+      const transaction = await services.createTransaction(
+        body.bookingId,
+        body.amount,
+        customer.id
+      );
+      return c.json({ success: true, data: transaction }, 201);
+    } catch (error) {
+      return handleTransactionError(
+        c,
+        error,
+        "Could not create transaction"
       );
     }
+  });
 
-    console.error("Could not create transaction", error);
-    return c.json(
-      {
-        success: false,
-        message: "Could not create transaction",
-      },
-      500
-    );
-  }
-});
+  routes.get("/", async (c) => {
+    try {
+      const customer = await services.getCustomerForUser(
+        c.get("authSession").user.id
+      );
+      if (!customer) {
+        return c.json(
+          { success: false, message: "Customer onboarding is required" },
+          409
+        );
+      }
 
-transactionRoutes.get("/", async (c) => {
-  try {
-    const customer = await getCustomerForUser(
-      c.get("authSession").user.id
-    );
-    if (!customer) {
-      return c.json(
-        { success: false, message: "Customer onboarding is required" },
-        409
+      const transactions = await services.getTransactionsForCustomer(
+        customer.id
+      );
+      return c.json({ success: true, data: transactions });
+    } catch (error) {
+      return handleTransactionError(
+        c,
+        error,
+        "Could not get transactions"
       );
     }
+  });
 
-    const transactions = await getTransactionsForCustomer(customer.id);
+  routes.get("/booking/:bookingId", async (c) => {
+    try {
+      const customer = await services.getCustomerForUser(
+        c.get("authSession").user.id
+      );
+      if (!customer) {
+        return c.json(
+          { success: false, message: "Customer onboarding is required" },
+          409
+        );
+      }
 
-    return c.json({ success: true, data: transactions });
-  } catch (error) {
-    console.error("Could not get transactions", error);
-    return c.json(
-      { success: false, message: "Could not get transactions" },
-      500
-    );
-  }
-});
-
-transactionRoutes.get("/booking/:bookingId", async (c) => {
-  try {
-    const customer = await getCustomerForUser(
-      c.get("authSession").user.id
-    );
-    if (!customer) {
-      return c.json(
-        { success: false, message: "Customer onboarding is required" },
-        409
+      const transactions = await services.getTransactionsForBooking(
+        c.req.param("bookingId"),
+        customer.id
+      );
+      return c.json({ success: true, data: transactions });
+    } catch (error) {
+      return handleTransactionError(
+        c,
+        error,
+        "Could not get booking transactions"
       );
     }
+  });
 
-    const transactions = await getTransactionsForBooking(
-      c.req.param("bookingId"),
-      customer.id
-    );
+  routes.get("/:id", async (c) => {
+    try {
+      const customer = await services.getCustomerForUser(
+        c.get("authSession").user.id
+      );
+      if (!customer) {
+        return c.json(
+          { success: false, message: "Customer onboarding is required" },
+          409
+        );
+      }
 
-    return c.json({ success: true, data: transactions });
-  } catch (error) {
-    if (error instanceof TransactionError) {
-      return c.json(
-        { success: false, message: error.message },
-        error.statusCode
+      const transaction = await services.getTransaction(
+        c.req.param("id"),
+        customer.id
+      );
+      if (!transaction) {
+        return c.json(
+          { success: false, message: "Transaction not found" },
+          404
+        );
+      }
+
+      return c.json({ success: true, data: transaction });
+    } catch (error) {
+      return handleTransactionError(
+        c,
+        error,
+        "Could not get transaction"
       );
     }
+  });
 
-    console.error("Could not get booking transactions", error);
-    return c.json(
-      { success: false, message: "Could not get booking transactions" },
-      500
-    );
-  }
-});
+  return routes;
+}
 
-transactionRoutes.get("/:id", async (c) => {
-  try {
-    const customer = await getCustomerForUser(
-      c.get("authSession").user.id
-    );
-    if (!customer) {
-      return c.json(
-        { success: false, message: "Customer onboarding is required" },
-        409
-      );
-    }
-
-    const transaction = await getTransaction(
-      c.req.param("id"),
-      customer.id
-    );
-    if (!transaction) {
-      return c.json(
-        { success: false, message: "Transaction not found" },
-        404
-      );
-    }
-
-    return c.json({ success: true, data: transaction });
-  } catch (error) {
-    console.error("Could not get transaction", error);
-    return c.json(
-      { success: false, message: "Could not get transaction" },
-      500
-    );
-  }
-});
-
-export default transactionRoutes;
+export default createTransactionRoutes();

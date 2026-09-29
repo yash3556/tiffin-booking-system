@@ -5,7 +5,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/middleware/auth.middleware.test.ts src/auth.integration.test.ts"
+    "test": "tsx --test src/middleware/auth.middleware.test.ts src/auth.integration.test.ts src/booking.ownership.integration.test.ts src/routes/booking.authorization.test.ts src/routes/transaction.authorization.test.ts"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.6",
