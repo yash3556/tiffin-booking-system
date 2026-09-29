@@ -51,7 +51,7 @@ function createApp(
     "/bookings",
     createBookingRoutes(
       {
-        getCustomerForUser: async (id) => ({
+       getCustomerForUser: async (id) => ({
           ...customer,
           id: id === "user-1" ? customer.id : `customer-for-${id}`,
           userId: id,
