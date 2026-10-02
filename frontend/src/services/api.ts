@@ -1,14 +1,19 @@
-const BASE_URL = 'http://192.168.1.40:3000';
+import { authenticatedApiFetch } from '@/lib/auth-client';
 
-type ApiResponse<T> = { success: true; data: T } | { success: false; message: string };
+type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; message: string };
 
 export async function apiFetch<T>(
   path: string,
   options?: RequestInit,
 ): Promise<T> {
-  const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
+  const headers = new Headers(options?.headers);
+  headers.set('Content-Type', 'application/json');
+
+  const response = await authenticatedApiFetch(path, {
     ...options,
+    headers,
   });
 
   const json: ApiResponse<T> = await response.json();

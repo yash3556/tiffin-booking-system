@@ -16,7 +16,6 @@ export type Booking = {
 };
 
 export type CreateBookingPayload = {
-  customerId: string;
   serviceId: string;
 };
 

@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { FlatList, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ErrorView } from '@/components/error-view';
@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { getServices } from '@/services/serviceService';
 import type { Service } from '@/types/service';
+import { styles } from '@/styles/services.styles';
 
 export default function ServicesScreen() {
   const router = useRouter();
@@ -30,7 +31,9 @@ export default function ServicesScreen() {
     }
   }, []);
 
-  useEffect(() => { fetchServices(); }, [fetchServices]);
+  useEffect(() => {
+  fetchServices();
+  }, [fetchServices]);
 
   if (loading) return <LoadingView message="Loading services…" />;
   if (error) return <ErrorView message={error} onRetry={fetchServices} />;
@@ -73,24 +76,4 @@ export default function ServicesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    paddingHorizontal: Spacing.three,
-  },
-  heading: { paddingVertical: Spacing.three },
-  list: { gap: Spacing.two },
-  card: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  empty: { textAlign: 'center', marginTop: Spacing.six },
-  pressed: { opacity: 0.7 },
-});
+

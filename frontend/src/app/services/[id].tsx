@@ -1,5 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { styles } from '@/styles/service-detail.styles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -42,32 +43,3 @@ export default function ServiceDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  safeArea: {
-    flex: 1,
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-    width: '100%',
-    paddingHorizontal: Spacing.three,
-  },
-  heading: { paddingVertical: Spacing.three },
-  card: {
-    padding: Spacing.three,
-    borderRadius: Spacing.two,
-    gap: Spacing.two,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  button: {
-    marginTop: Spacing.four,
-    backgroundColor: '#3c87f7',
-    borderRadius: Spacing.two,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
-  buttonText: { color: '#fff' },
-  pressed: { opacity: 0.8 },
-});
