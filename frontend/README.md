@@ -1,56 +1,245 @@
-# Welcome to your Expo app 👋
+# Tiffin Hub — Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Frontend application for **Tiffin Hub**, a subscription meal and micro-delivery platform.
 
-## Get started
+Built with **Expo, React Native, TypeScript, and Expo Router**.
 
-1. Install dependencies
+## Features
 
-   ```bash
-   npm install
-   ```
+- User signup and login
+- Authentication and session handling
+- Customer onboarding
+- Service listing
+- Service details
+- Service booking
+- Booking confirmation
+- Booking status tracking
+- Booking status history
+- Transaction history
+- Loading, error, and empty states
+- Web support
+- Android testing with Expo Go
 
-2. Start the app
+## Tech Stack
 
-   ```bash
-   npx expo start
-   ```
+- **Expo SDK 57**
+- **React 19.2.3**
+- **React Native 0.86.3**
+- **TypeScript ~6.0.3**
+- **Expo Router ~57.0.23**
+- **Better Auth ^1.7.6**
+- **@better-auth/expo ^1.7.6**
+- **Expo Secure Store**
+- **React Native Web**
 
-In the output, you'll find options to open the app in a
+## Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+```text
+frontend/
+├── src/
+│   ├── app/
+│   │   ├── (tabs)/
+│   │   │   ├── index.tsx
+│   │   │   └── history.tsx
+│   │   ├── booking/
+│   │   │   └── [id]/
+│   │   │       ├── confirmation.tsx
+│   │   │       └── status.tsx
+│   │   ├── book/
+│   │   │   └── [serviceId].tsx
+│   │   ├── services/
+│   │   │   └── [id].tsx
+│   │   ├── customer-onboarding.tsx
+│   │   ├── login.tsx
+│   │   ├── signup.tsx
+│   │   └── _layout.tsx
+│   │
+│   ├── components/
+│   ├── constants/
+│   ├── hooks/
+│   ├── lib/
+│   ├── services/
+│   ├── styles/
+│   └── types/
+│
+├── assets/
+├── .env
+├── package.json
+├── tsconfig.json
+└── README.md
+Application Flow
+Signup / Login
+      ↓
+Authentication
+      ↓
+Customer Onboarding
+      ↓
+Services
+      ↓
+Service Details
+      ↓
+Booking
+      ↓
+Booking Confirmation
+      ↓
+Booking Status
+      ↓
+History
+API Architecture
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+The frontend separates UI screens from backend communication.
 
-## Get a fresh project
+Screen
+  ↓
+Feature Service
+  ↓
+API Layer
+  ↓
+Backend API
+  ↓
+Response
+  ↓
+UI State
 
-When you're ready, run:
+The central API layer is:
 
-```bash
-npm run reset-project
-```
+src/services/api.ts
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Feature-specific API services are:
 
-### Other setup steps
+src/services/customerService.ts
+src/services/serviceService.ts
+src/services/bookingService.ts
+src/services/transactionService.ts
+API Endpoints
+Customers
+POST /customers
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Used during customer onboarding.
 
-## Learn more
+Services
+GET /services
 
-To learn more about developing your project with Expo, look at the following resources:
+Used to retrieve available services.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Bookings
+POST /bookings
+GET /bookings/:id
+PATCH /bookings/:id/status
+GET /bookings/:id/history
+Transactions
+GET /transactions
 
-## Join the community
+Transaction creation belongs to the payment flow and should not be triggered simply because a booking reaches COMPLETED.
 
-Join our community of developers creating universal apps.
+Booking Status
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+The frontend supports:
+
+PENDING
+CONFIRMED
+CANCELLED
+COMPLETED
+
+Current booking flow:
+
+PENDING → CONFIRMED → COMPLETED
+PENDING → CANCELLED
+Authentication
+
+Authentication is handled using Better Auth.
+
+Authentication configuration:
+
+src/lib/auth-client.ts
+
+Route protection and session handling:
+
+src/app/_layout.tsx
+
+Native authentication storage uses Expo Secure Store.
+
+Customer Onboarding
+
+Authenticated customers can complete their profile by providing:
+
+Name
+Phone number
+
+Screen:
+
+src/app/customer-onboarding.tsx
+
+Customer API:
+
+src/services/customerService.ts
+Environment Configuration
+
+Create a .env file inside the frontend directory:
+
+EXPO_PUBLIC_API_URL=http://localhost:3000
+
+The variable defines the backend API base URL for local development.
+
+Do not commit passwords, authentication tokens, API keys, or other secrets.
+
+Getting Started
+1. Clone the repository
+git clone https://github.com/yash3556/tiffin-booking-system.git
+2. Open the frontend
+cd tiffin-booking-system/frontend
+3. Install dependencies
+npm install
+4. Configure the environment
+
+Create .env:
+
+EXPO_PUBLIC_API_URL=http://localhost:3000
+5. Start the application
+npx expo start
+
+For web:
+
+npm run web
+
+For Android testing, open the project with Expo Go.
+
+Development Checks
+
+Run TypeScript validation:
+
+npx tsc --noEmit
+
+Check the Git diff for formatting and whitespace issues:
+
+git diff --check
+Payment Integration
+
+Payment integration is dependent on the backend payment API contract.
+
+Transactions should be created as part of the payment flow rather than automatically when a booking is marked COMPLETED.
+
+The frontend will integrate the payment flow once the backend payment endpoint and request/response contract are finalized.
+
+Project Status
+Completed
+Authentication
+Customer onboarding
+Services listing
+Service details
+Booking flow
+Booking confirmation
+Booking status
+Booking status history
+Transaction history
+Loading states
+Error states
+Empty states
+API integration
+Web support
+Pending
+Final payment integration based on the backend payment API
+Final UI refinements based on the approved Figma/design handoff
+Repository
+
+GitHub: https://github.com/yash3556/tiffin-booking-system
