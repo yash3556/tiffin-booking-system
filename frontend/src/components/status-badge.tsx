@@ -7,12 +7,15 @@ import type { TransactionStatus } from '@/types/transaction';
 type Status = BookingStatus | TransactionStatus;
 
 const STATUS_COLORS: Record<Status, { bg: string; text: string }> = {
+  CREATING_ORDER: { bg: '#FEF3C7', text: '#92400E' },
   PENDING: { bg: '#FEF3C7', text: '#92400E' },
+  AUTHORIZED: { bg: '#DBEAFE', text: '#1E40AF' },
   CONFIRMED: { bg: '#D1FAE5', text: '#065F46' },
   COMPLETED: { bg: '#DBEAFE', text: '#1E40AF' },
   CANCELLED: { bg: '#FEE2E2', text: '#991B1B' },
   SUCCESS: { bg: '#D1FAE5', text: '#065F46' },
   FAILED: { bg: '#FEE2E2', text: '#991B1B' },
+  RECONCILIATION_REQUIRED: { bg: '#FEE2E2', text: '#991B1B' },
 };
 
 type Props = {
