@@ -5,7 +5,11 @@ import {
 } from "../middleware/auth.middleware.js";
 import { getCustomerForUser } from "../services/customer.service.js";
 import {
-  createTransaction,
+  initiatePayment,
+  PaymentError,
+  verifyPayment,
+} from "../services/payment.service.js";
+import {
   getTransaction,
   getTransactionsForBooking,
   getTransactionsForCustomer,
@@ -14,11 +18,14 @@ import {
 import {
   transactionValidationMessage,
   validateTransaction,
+  validateIdempotencyKey,
+  validateCheckoutVerification,
 } from "../validators/transaction.validator.js";
 
 const transactionServices = {
   getCustomerForUser,
-  createTransaction,
+  initiatePayment,
+  verifyPayment,
   getTransaction,
   getTransactionsForBooking,
   getTransactionsForCustomer,
@@ -31,6 +38,12 @@ function handleTransactionError(
   error: unknown,
   fallback: string
 ) {
+  if (error instanceof PaymentError) {
+    return c.json(
+      { success: false, message: error.message },
+      error.statusCode
+    );
+  }
   if (error instanceof TransactionError) {
     return c.json(
       { success: false, message: error.message },
@@ -61,6 +74,16 @@ export function createTransactionRoutes(
         400
       );
     }
+    const idempotencyKey = c.req.header("Idempotency-Key");
+    if (
+      typeof idempotencyKey !== "string" ||
+      !validateIdempotencyKey(idempotencyKey)
+    ) {
+      return c.json(
+        { success: false, message: "Valid Idempotency-Key header is required" },
+        400
+      );
+    }
 
     try {
       const customer = await services.getCustomerForUser(
@@ -73,12 +96,24 @@ export function createTransactionRoutes(
         );
       }
 
-      const transaction = await services.createTransaction(
+      const payment = await services.initiatePayment(
         body.bookingId,
-        body.amount,
-        customer.id
+        customer.id,
+        idempotencyKey
       );
-      return c.json({ success: true, data: transaction }, 201);
+      return c.json(
+        {
+          success: true,
+          data: {
+            ...payment.transaction,
+            keyId: payment.keyId,
+            ...("mockPayment" in payment
+              ? { mockPayment: payment.mockPayment }
+              : {}),
+          },
+        },
+        payment.created ? 201 : payment.processing ? 202 : 200
+      );
     } catch (error) {
       return handleTransactionError(
         c,
@@ -136,6 +171,37 @@ export function createTransactionRoutes(
         error,
         "Could not get booking transactions"
       );
+    }
+  });
+
+  routes.post("/:id/verify", async (c) => {
+    const body = await c.req.json().catch(() => null);
+    if (!validateCheckoutVerification(body)) {
+      return c.json(
+        { success: false, message: "Valid Razorpay payment details are required" },
+        400
+      );
+    }
+    try {
+      const customer = await services.getCustomerForUser(
+        c.get("authSession").user.id
+      );
+      if (!customer) {
+        return c.json(
+          { success: false, message: "Customer onboarding is required" },
+          409
+        );
+      }
+      const transaction = await services.verifyPayment(
+        c.req.param("id"),
+        customer.id,
+        body.razorpay_order_id,
+        body.razorpay_payment_id,
+        body.razorpay_signature
+      );
+      return c.json({ success: true, data: transaction });
+    } catch (error) {
+      return handleTransactionError(c, error, "Could not verify payment");
     }
   });
 

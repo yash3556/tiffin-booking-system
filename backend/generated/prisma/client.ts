@@ -67,6 +67,11 @@ export type BookingHistory = Prisma.BookingHistoryModel
  */
 export type Transaction = Prisma.TransactionModel
 /**
+ * Model WebhookEvent
+ * 
+ */
+export type WebhookEvent = Prisma.WebhookEventModel
+/**
  * Model account
  * 
  */

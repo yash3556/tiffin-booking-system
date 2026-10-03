@@ -5,7 +5,7 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "tsx --test src/middleware/auth.middleware.test.ts src/auth.integration.test.ts src/booking.ownership.integration.test.ts src/routes/booking.authorization.test.ts src/routes/transaction.authorization.test.ts"
+    "test": "tsx --test src/middleware/auth.middleware.test.ts src/auth.integration.test.ts src/booking.ownership.integration.test.ts src/routes/booking.authorization.test.ts src/routes/transaction.authorization.test.ts src/routes/razorpay-webhook.authorization.test.ts src/lib/razorpay.test.ts src/services/mock-payment-provider.test.ts"
   },
   "dependencies": {
     "@better-auth/expo": "1.7.6",
@@ -15,7 +15,8 @@
     "@prisma/client": "^7.10.0",
     "better-auth": "1.7.6",
     "hono": "^4.13.9",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "razorpay": "2.9.8"
   },
   "devDependencies": {
     "@better-auth/memory-adapter": "^1.7.6",

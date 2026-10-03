@@ -1,6 +1,7 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  previewFeatures = ["partialIndexes"]
 }
 
 datasource db {
@@ -47,12 +48,27 @@ model BookingHistory {
 }
 
 model Transaction {
-  id        String            @id @default(cuid())
-  bookingId String
-  amount    Int
-  status    TransactionStatus @default(PENDING)
-  createdAt DateTime          @default(now())
-  booking   Booking           @relation(fields: [bookingId], references: [id])
+  id                String            @id @default(cuid())
+  bookingId         String
+  amount            Int
+  status            TransactionStatus @default(PENDING)
+  createdAt         DateTime          @default(now())
+  currency          String            @default("INR")
+  idempotencyKey    String?           @unique
+  razorpayOrderId   String?           @unique
+  razorpayPaymentId String?           @unique
+  updatedAt         DateTime          @updatedAt
+  booking           Booking           @relation(fields: [bookingId], references: [id])
+
+  @@unique([bookingId], where: raw("(status = ANY (ARRAY['CREATING_ORDER'::\"TransactionStatus\", 'PENDING'::\"TransactionStatus\", 'AUTHORIZED'::\"TransactionStatus\", 'RECONCILIATION_REQUIRED'::\"TransactionStatus\"]))"), map: "Transaction_one_active_attempt_per_booking_key")
+}
+
+model WebhookEvent {
+  id                String   @id
+  event             String
+  razorpayPaymentId String?
+  razorpayOrderId   String?
+  processedAt       DateTime @default(now())
 }
 
 model account {
@@ -123,4 +139,7 @@ enum TransactionStatus {
   PENDING
   SUCCESS
   FAILED
+  CREATING_ORDER
+  AUTHORIZED
+  RECONCILIATION_REQUIRED
 }

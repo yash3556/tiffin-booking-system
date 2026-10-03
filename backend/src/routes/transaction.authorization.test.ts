@@ -16,8 +16,19 @@ const transaction = {
   id: "transaction-1",
   bookingId: "booking-1",
   amount: 100,
+  currency: "INR",
+  idempotencyKey: "request-key",
+  razorpayOrderId: "order-1",
+  razorpayPaymentId: "payment-1",
   status: "SUCCESS" as const,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+};
+const paymentAttempt = {
+  ...transaction,
+  razorpayPaymentId: null,
+  status: "PENDING" as const,
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };
 
 function createApp(
@@ -37,11 +48,13 @@ function createApp(
           id: id === "user-1" ? customer.id : `customer-for-${id}`,
           userId: id,
         }),
-        createTransaction: async (bookingId, amount) => ({
-          ...transaction,
-          bookingId,
-          amount,
+        initiatePayment: async (bookingId) => ({
+          transaction: { ...paymentAttempt, bookingId },
+          keyId: "rzp_test_example",
+          created: true,
+          processing: false,
         }),
+        verifyPayment: async () => transaction,
         getTransaction: async (id) =>
           id === transaction.id ? transaction : null,
         getTransactionsForBooking: async () => [transaction],
@@ -59,6 +72,7 @@ test("transaction APIs require a session", async () => {
   for (const path of [
     "/transactions",
     "/transactions/transaction-1",
+    "/transactions/transaction-1/verify",
     "/transactions/booking/booking-1",
   ]) {
     const response = await app.request(path);
@@ -67,38 +81,132 @@ test("transaction APIs require a session", async () => {
 });
 
 test("creates transactions for owned bookings using the session customer", async () => {
-  let createdWith: [string, number, string] | undefined;
+  let createdWith: [string, string, string] | undefined;
   const app = createApp({
-    createTransaction: async (bookingId, amount, customerId) => {
-      createdWith = [bookingId, amount, customerId];
-      return { ...transaction, bookingId, amount };
+    initiatePayment: async (bookingId, customerId, key) => {
+      createdWith = [bookingId, customerId, key];
+      return {
+        transaction: { ...paymentAttempt, bookingId },
+        keyId: "rzp_test_example",
+        created: true,
+        processing: false,
+      };
     },
   });
   const response = await app.request("/transactions", {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      "Idempotency-Key": "request-key",
+    },
     body: JSON.stringify({
       bookingId: "booking-1",
-      amount: 100,
-      userId: "attacker",
-      customerId: "attacker",
     }),
   });
 
   assert.equal(response.status, 201);
-  assert.deepEqual(createdWith, ["booking-1", 100, customer.id]);
+  assert.deepEqual(createdWith, ["booking-1", customer.id, "request-key"]);
+  assert.equal((await response.json()).data.status, "PENDING");
+});
+
+test("returns mock verification details without changing the transaction response fields", async () => {
+  const app = createApp({
+    initiatePayment: async () => ({
+      transaction: paymentAttempt,
+      keyId: "mock",
+      mockPayment: {
+        orderId: "mock_order_transaction-1",
+        paymentId: "mock_payment_transaction-1",
+        amount: 10000,
+        currency: "INR",
+        status: "captured" as const,
+        signature: "local-signature",
+      },
+      created: true,
+      processing: false,
+    }),
+  });
+  const response = await app.request("/transactions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "Idempotency-Key": "request-key",
+    },
+    body: JSON.stringify({ bookingId: "booking-1" }),
+  });
+  const result = await response.json();
+
+  assert.equal(response.status, 201);
+  assert.equal(result.data.id, paymentAttempt.id);
+  assert.equal(result.data.keyId, "mock");
+  assert.equal(result.data.mockPayment.paymentId, "mock_payment_transaction-1");
+  assert.equal(result.data.mockPayment.signature, "local-signature");
+});
+
+test("payment initiation rejects a client-supplied amount", async () => {
+  const response = await createApp().request("/transactions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "Idempotency-Key": "request-key",
+    },
+    body: JSON.stringify({ bookingId: "booking-1", amount: 1 }),
+  });
+  assert.equal(response.status, 400);
+});
+
+test("payment initiation requires an idempotency key", async () => {
+  const response = await createApp().request("/transactions", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ bookingId: "booking-1" }),
+  });
+  assert.equal(response.status, 400);
+});
+
+test("verifies payment results with the session-derived customer", async () => {
+  let verifiedWith: [string, string, string, string, string] | undefined;
+  const app = createApp({
+    verifyPayment: async (transactionId, customerId, orderId, paymentId, signature) => {
+      verifiedWith = [transactionId, customerId, orderId, paymentId, signature];
+      return transaction;
+    },
+  });
+  const response = await app.request(
+    "/transactions/transaction-1/verify",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        razorpay_order_id: "order-1",
+        razorpay_payment_id: "payment-1",
+        razorpay_signature: "signature",
+      }),
+    }
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(verifiedWith, [
+    "transaction-1",
+    customer.id,
+    "order-1",
+    "payment-1",
+    "signature",
+  ]);
 });
 
 test("rejects transaction creation for another customer's booking", async () => {
   const app = createApp({
-    createTransaction: async () => {
+    initiatePayment: async () => {
       throw new TransactionError("Forbidden", 403);
     },
   });
   const response = await app.request("/transactions", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ bookingId: "booking-other", amount: 100 }),
+    headers: {
+      "content-type": "application/json",
+      "Idempotency-Key": "request-key",
+    },
+    body: JSON.stringify({ bookingId: "booking-other" }),
   });
   assert.equal(response.status, 403);
 });

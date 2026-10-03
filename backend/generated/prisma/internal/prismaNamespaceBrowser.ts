@@ -56,6 +56,7 @@ export const ModelName = {
   Booking: 'Booking',
   BookingHistory: 'BookingHistory',
   Transaction: 'Transaction',
+  WebhookEvent: 'WebhookEvent',
   account: 'account',
   session: 'session',
   user: 'user',
@@ -126,10 +127,26 @@ export const TransactionScalarFieldEnum = {
   bookingId: 'bookingId',
   amount: 'amount',
   status: 'status',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  currency: 'currency',
+  idempotencyKey: 'idempotencyKey',
+  razorpayOrderId: 'razorpayOrderId',
+  razorpayPaymentId: 'razorpayPaymentId',
+  updatedAt: 'updatedAt'
 } as const
 
 export type TransactionScalarFieldEnum = (typeof TransactionScalarFieldEnum)[keyof typeof TransactionScalarFieldEnum]
+
+
+export const WebhookEventScalarFieldEnum = {
+  id: 'id',
+  event: 'event',
+  razorpayPaymentId: 'razorpayPaymentId',
+  razorpayOrderId: 'razorpayOrderId',
+  processedAt: 'processedAt'
+} as const
+
+export type WebhookEventScalarFieldEnum = (typeof WebhookEventScalarFieldEnum)[keyof typeof WebhookEventScalarFieldEnum]
 
 
 export const AccountScalarFieldEnum = {

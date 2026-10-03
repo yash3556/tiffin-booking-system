@@ -144,7 +144,6 @@ export function createBookingRoutes(
         400
       );
     }
-
     try {
       const customer = await services.getCustomerForUser(
         c.get("authSession").user.id

@@ -12,11 +12,18 @@ export class BookingError extends Error {
 }
 
 const validTransitions: Record<BookingStatusValue, BookingStatusValue[]> = {
-  PENDING: ["CONFIRMED", "CANCELLED"],
+  PENDING: ["CANCELLED"],
   CONFIRMED: ["COMPLETED", "CANCELLED"],
   CANCELLED: [],
   COMPLETED: [],
 };
+
+export function isAllowedBookingStatusTransition(
+  fromStatus: BookingStatusValue,
+  toStatus: BookingStatusValue
+) {
+  return validTransitions[fromStatus].includes(toStatus);
+}
 
 export async function getBookingsForCustomer(customerId: string) {
   return prisma.booking.findMany({
@@ -106,7 +113,7 @@ export async function updateBookingStatus(
 
     const fromStatus = booking.status as BookingStatusValue;
 
-    if (!validTransitions[fromStatus].includes(toStatus)) {
+    if (!isAllowedBookingStatusTransition(fromStatus, toStatus)) {
       throw new BookingError(
         `Cannot change booking status from ${fromStatus} to ${toStatus}`,
         400

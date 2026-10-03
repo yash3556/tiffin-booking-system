@@ -1,42 +1,50 @@
 export type TransactionInput = {
   bookingId: string;
-  amount: number;
+};
+export type CheckoutVerificationInput = {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
 };
 
 export function validateTransaction(body: unknown): body is TransactionInput {
-  if (!body || typeof body !== "object") {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
     return false;
   }
 
   const transaction = body as Record<string, unknown>;
-  if (
-    typeof transaction.bookingId !== "string" ||
-    transaction.bookingId.trim() === ""
-  ) {
-    return false;
-  }
-
-  if (
-    typeof transaction.amount !== "number" ||
-    !Number.isInteger(transaction.amount) ||
-    transaction.amount <= 0
-  ) {
-    return false;
-  }
-
-  return true;
+  return (
+    Object.keys(transaction).length === 1 &&
+    typeof transaction.bookingId === "string" &&
+    transaction.bookingId.trim() !== ""
+  );
 }
 
 export function transactionValidationMessage(body: unknown) {
-  if (!body || typeof body !== "object") {
-    return "Request body is required";
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return "Request body must contain bookingId";
   }
-  const transaction = body as Record<string, unknown>;
-  if (
-    typeof transaction.bookingId !== "string" ||
-    transaction.bookingId.trim() === ""
-  ) {
-    return "Valid bookingId is required";
+  return "Only a valid bookingId is accepted";
+}
+
+export function validateIdempotencyKey(key: string | undefined) {
+  return typeof key === "string" && key.trim().length > 0 && key.length <= 128;
+}
+
+export function validateCheckoutVerification(
+  body: unknown
+): body is CheckoutVerificationInput {
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return false;
   }
-  return "Amount must be a positive integer";
+  const result = body as Record<string, unknown>;
+  return (
+    Object.keys(result).length === 3 &&
+    typeof result.razorpay_order_id === "string" &&
+    result.razorpay_order_id.length > 0 &&
+    typeof result.razorpay_payment_id === "string" &&
+    result.razorpay_payment_id.length > 0 &&
+    typeof result.razorpay_signature === "string" &&
+    result.razorpay_signature.length > 0
+  );
 }

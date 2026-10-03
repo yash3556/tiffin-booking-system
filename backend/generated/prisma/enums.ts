@@ -22,7 +22,10 @@ export type BookingStatus = (typeof BookingStatus)[keyof typeof BookingStatus]
 export const TransactionStatus = {
   PENDING: 'PENDING',
   SUCCESS: 'SUCCESS',
-  FAILED: 'FAILED'
+  FAILED: 'FAILED',
+  CREATING_ORDER: 'CREATING_ORDER',
+  AUTHORIZED: 'AUTHORIZED',
+  RECONCILIATION_REQUIRED: 'RECONCILIATION_REQUIRED'
 } as const
 
 export type TransactionStatus = (typeof TransactionStatus)[keyof typeof TransactionStatus]

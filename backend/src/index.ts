@@ -1,3 +1,5 @@
+import "dotenv/config";
+
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
@@ -5,11 +7,13 @@ import customerRoutes from "./routes/customer.routes.js";
 import serviceRoutes from "./routes/service.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
 import transactionRoutes from "./routes/transaction.routes.js";
+import razorpayWebhookRoutes from "./routes/razorpay-webhook.routes.js";
 import { createAuthRoutes } from "./routes/auth.routes.js";
 import { auth } from "./lib/auth.js";
 
-const app = new Hono();
 
+
+const app = new Hono();
 
 
 const allowedOrigins = (
@@ -53,6 +57,7 @@ app.route("/customers", customerRoutes);
 app.route("/services", serviceRoutes);
 app.route("/bookings", bookingRoutes);
 app.route("/transactions", transactionRoutes);
+app.route("/webhooks", razorpayWebhookRoutes);
 
 serve({
   fetch: app.fetch,

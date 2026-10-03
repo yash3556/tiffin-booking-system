@@ -57,29 +57,3 @@ export async function getTransaction(id: string, customerId: string) {
 
   return prisma.transaction.findUnique({ where: { id } });
 }
-
-export async function createTransaction(
-  bookingId: string,
-  amount: number,
-  customerId: string
-) {
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    select: { id: true, customerId: true },
-  });
-
-  if (!booking) {
-    throw new TransactionError("Booking not found", 404);
-  }
-  if (booking.customerId !== customerId) {
-    throw new TransactionError("Forbidden", 403);
-  }
-
-  return prisma.transaction.create({
-    data: {
-      bookingId,
-      amount,
-      status: "SUCCESS",
-    },
-  });
-}

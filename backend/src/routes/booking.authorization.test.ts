@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { Hono } from "hono";
 import { createAuthMiddleware } from "../middleware/auth.middleware.js";
-import { BookingError } from "../services/booking.service.js";
+import {
+  BookingError,
+  isAllowedBookingStatusTransition,
+} from "../services/booking.service.js";
 import { createBookingRoutes } from "./booking.routes.js";
 
 const customer = {
@@ -102,6 +105,11 @@ test("booking APIs require a session", async () => {
     const response = await app.request(path);
     assert.equal(response.status, 401);
   }
+});
+
+test("pending bookings cannot be confirmed without the payment flow", () => {
+  assert.equal(isAllowedBookingStatusTransition("PENDING", "CONFIRMED"), false);
+  assert.equal(isAllowedBookingStatusTransition("PENDING", "CANCELLED"), true);
 });
 
 test("creates and lists bookings using the session-derived customer", async () => {
